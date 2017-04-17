@@ -1,0 +1,524 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <limits>
+#include <cstdlib>
+
+using namespace std;
+
+
+static int INF = 2147483647 / 2;
+/**
+ * Auto-generated code below aims at helping you parse
+ * the standard input according to the problem statement.
+ **/
+
+// Создание класса Factory
+
+class Factory
+{
+    
+    int n;
+    vector<int> own; 
+    vector<int> cyborgs; 
+    vector<int> prod;    
+    
+    public:
+    
+    void readFactoryCount( int count){
+        n=count;
+        //cerr << "Numbers of factory " << n << endl;      
+    }
+   
+    void readFactoryData( int ID, int town, int tcyborgs, int tprod){
+    
+        //cerr << "Factory data " << ID <<  endl;     
+        own.reserve(n);
+        cyborgs.reserve(n);
+        prod.reserve(n);
+        //cin >> town >> tcyborgs >> tprod >> tnull1 >> tnull2; cin.ignore();
+        //cerr << "Factory data in " << ID << " " << town << " " << tcyborgs << " " << tprod <<  endl;  
+        own[ID]=town;
+        cyborgs[ID]=tcyborgs;
+        prod[ID]=tprod;
+        //cerr << "Factory data inC " << ID << " " << own[ID] << " " << cyborgs[ID] << " " << prod[ID] <<  endl;      
+
+    }
+   
+   int OutOwn(int i){
+        return own[i];
+    }
+    
+    int OutCyborgs(int i){
+        return cyborgs[i];
+    }
+    
+    int OutProd(int i){
+        return prod[i];
+    }      
+
+};  // Конец класса Factory
+
+
+
+//Создаем класс Граф с расстояниями и метод добавления поиска ближайшей точки из начального узла.фабрикиузла
+
+class Map {
+
+    int m; //количество дуг в орграфе
+    // int adj[n][n]; //список смежности
+    //vector<int> *weight; //вес ребра в орграфе
+    vector<bool> used; //массив для хранения информации о пройденных и не пройденных вершинах
+    int *dist; //массив для хранения расстояния от стартовой вершины
+    int *pred; //массив предков, необходимых для восстановления кратчайшего пути из стартовой вершины 
+    int start; //стартовая вершина, от которой ищется расстояние до всех других
+    int **dimInd;
+    int **adj; //список смежности
+    int **weight; //список смежности
+
+    public:
+
+    int n; //количество вершин в орграфе
+    //процедура считывания входных данных с консоли
+    //int **adj; //список смежности
+
+    void readfactoryCount(){
+        int factoryCount;
+        cin >> factoryCount; cin.ignore();
+        //cerr  << "Nun of Fac "<< factoryCount << endl;      
+        n=factoryCount;
+    }
+
+    void readlinkCount(){
+        int linkCount; // the number of links between factories
+        cin >> linkCount; cin.ignore();
+        //cerr << "Links " << linkCount << endl;      
+        m=linkCount;
+    }
+
+    void readData(){
+
+        //Инициализация двумерного массива указателей
+        adj = new int * [n]; 
+        for (int i = 0; i < n; ++i) {
+            adj[i] = new int [n]; 
+        }
+
+        //Инициализация двумерного массива  весов дуг
+        weight = new int * [n]; 
+        for (int i = 0; i < n; ++i) {
+            weight[i] = new int [n]; 
+        }
+
+        //считываем граф, заданный списком ребер
+        for (int i = 0; i < m; ++i) {
+            int u, v, w;
+            cin >> u >> v >> w; cin.ignore();
+    
+            //cerr << "Dis " << i << " "<< u << " " << v << " "<< w << endl; 
+            //cerr << "Dis " << v << endl; 
+        
+            adj[u][v]=v;
+            adj[v][u]=u;
+            weight[u][v]=w;
+            weight[v][u]=w;
+        }
+        
+        used.resize(n, false);
+        pred = new int[n];
+        dist = new int[n];
+
+        /*
+        // Проверка заполнения
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < n; ++j) {
+                    //cerr << " " << adj[i][j] << " ";
+                }
+                //cerr << endl;
+            }
+        //cerr << endl;
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                cerr << " " << weight[i][j] << " ";
+            }
+        cerr << endl;
+        }
+        */   
+    
+        
+    } //Конец метода считывания
+
+    
+    void dejkstra(int s) { 
+  
+        // Очистка временных переменных
+        for (int i = 0; i < n; ++i) {
+            pred[i] = -1;
+            dist[i] = INF;
+            used[i] = false;
+        }
+        
+        //Контроль очистки переменных
+        /*
+        for (int i = 0; i < n; ++i) {
+            cerr << pred[i] << " ";
+        } 
+        cerr << endl;
+        for (int i = 0; i < n; ++i) {
+            cerr << dist[i] << " ";
+        }
+        cerr << " 4"<< endl; 
+        */  
+        
+        dist[s] = 0; //тчайшее расстояние до стартовой вершины равно 0
+        for (int iter = 0; iter < n; ++iter) {
+            int v = -1;
+            int distV = INF;
+            //cerr << " l_1"<< endl; 
+            //выбираем вершину, кратчайшее расстояние до которого еще не найдено
+            for (int i = 0; i < n; ++i) {
+                //cerr << " loop 2 "  << i<< endl; 
+                if (used[i]) {
+                    //cerr << " TP 1  end" << endl;
+                    continue;
+                }
+                //cerr << " TP 2  end" << endl;
+                if (distV < dist[i]) {
+                    //cerr << " TP 3  end" << endl;
+                    continue;
+                }
+                //cerr << " TP 4  end" << endl;
+                v = i;
+                //cerr << " TP 5  end" << endl;
+                distV = dist[i];
+                //cerr << " loop 2  end" << endl; 
+            }
+            
+            //рассматриваем все дуги, исходящие из найденной вершины
+            //cerr << "_V_" << v <<endl;
+            for (int i = 0; i < n; ++i) {
+                //cerr << " v " << v << " i " << i << " " ;
+                int u = adj[v][i];
+                //cerr << "_u_" << u ;
+                int weightU = weight[v][i];
+                //cerr << "_weeightU_" << weightU << endl;
+                //релаксация вершины
+                if (dist[v] + weightU < dist[u]) {
+                    dist[u] = dist[v] + weightU;
+                    //cerr << "_*_" <<  v << "_"<< i << "_"<< dist[u] << endl;
+                    pred[u] = v;
+                }
+            }
+        
+        //помечаем вершину v просмотренной, до нее найдено кратчайшее расстояние
+        used[v] = true;
+        }
+    }
+
+
+    void createDimIndexes(Map fld) {     //Создаем таблицу вершин сортированных по расстоянию
+
+        int **tmpInd;
+
+        //Инициализация двумерного массива  под сортированные индексы n * n  
+        dimInd = new int * [n]; 
+        for (int i = 0; i < n; ++i) {
+                dimInd[i] = new int [n]; 
+        }
+
+        //Инициализация двумерного массива  под свременную пару индекс + расстояние 2 * n  
+        tmpInd = new int * [2]; 
+        for (int i = 0; i < 2; ++i) {
+            tmpInd[i] = new int [n]; 
+        }
+
+        for (int i = 0; i < n; ++i) {
+
+            //cerr << "start "<< i << endl; 
+            fld.dejkstra(i); 
+            //cerr << "dejkstra "<< i << endl;    
+    
+            for (int v = 0; v < n; ++v) {
+      
+                //cerr << "dist " << v << " "<< dist[v] << ""  << endl;    
+                tmpInd[0][v]=v;
+                //cerr << " r1 " << tmpInd[0][v] << endl;
+                tmpInd[1][v]=dist[v];
+                //cerr << "tmp  " << v << " "<< tmpInd[0][v] << " " << tmpInd[1][v] << endl;   
+                //cerr << endl; 
+            }  
+            /*
+            // Проверка заполнения временного массива
+            for (int l = 0; l < 2; ++l) {
+                for (int m = 0; m < n; ++m) {
+                    cerr << " " << tmpInd[l][m] << " ";
+                }
+            cerr << endl;    
+            }
+            */    
+            // Сорттировка пузырьком временного массива
+            int ref;
+            int t1;
+            int t2;
+        
+            for (int j = 1; j < n; ++j) {
+                ref=tmpInd[1][j];
+                if (ref==0) continue;
+                for (int k =(j+1); k < n; ++k) {
+                    if (tmpInd[1][k]==0) continue;
+                    //cerr << "srv  " << k << "  "<< tmpInd[1][j] << "  "<< tmpInd[1][k];
+                    if (ref>tmpInd[1][k]) {
+                        //cerr << " tp "<< endl;
+                        ref= tmpInd[1][k];
+                        t1=tmpInd[1][j];
+                        t2=tmpInd[0][j];
+                        tmpInd[1][j]=tmpInd[1][k];
+                        tmpInd[0][j]=tmpInd[0][k];
+                        tmpInd[1][k]=t1;
+                        tmpInd[0][k]=t2;
+                        //cerr << " " << i<<" " << j<< " "<<dimInd[i][j] ;
+                    }
+                    //cerr << " out " << tmpInd[1][j] << endl;
+                }
+                //cerr << "min  " << min << " ";
+            }
+  
+            //Заполнение массива индексов
+            for (int j = 0; j < n; ++j) {
+                if (tmpInd[1][j]==0) continue;
+                dimInd[i][j]=tmpInd[0][j];
+            }
+
+            /*
+            // Проверка заполнения временного массива
+            for (int c = 0; c < 2; ++c) {
+                for (int d = 0; d < n; ++d) {
+                    cerr << " " << tmpInd[c][d] << " ";
+                }
+                cerr << endl;    
+            }    
+            cerr << endl;      
+            
+            // Проверка заполнения временного массива
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < n; ++j) {
+                    cerr << " " << dimInd[i][j] << " ";
+                }
+                cerr << endl;    
+            }   
+            */   
+
+        }   
+    }
+   
+    //Функция возврата ближайшей  или следующей  по дальности точки от начальной
+    int findWay(int start, int pos){
+        return dimInd[start][pos];
+    }
+    
+};  //Конец класса MAP
+
+
+int main()
+{
+
+int bind=2;  
+   
+Map field;
+field.readfactoryCount();
+field.readlinkCount();
+field.readData();
+
+Factory factories;
+factories.readFactoryCount(field.n);
+field.createDimIndexes(field); 
+
+
+// game loop
+while (1) {
+    int entityCount; // the number of entities (e.g. factories and troops)
+    cin >> entityCount; cin.ignore();
+    
+    // Цикл заполнения/обновления данных
+    for (int i = 0; i < entityCount; i++) {
+        int entityId;
+        string entityType;
+        int arg1;
+        int arg2;
+        int arg3;
+        int arg4;
+        int arg5;
+        cin >> entityId >> entityType >> arg1 >> arg2 >> arg3 >> arg4 >> arg5; cin.ignore();
+        //cerr << "entityId " << entityId << " " << entityType << " " << arg1 << " " << arg2 << " " << arg3 << " " << arg4 << " " << arg5 << endl;        
+            
+        if (!entityType.compare("FACTORY"))  {
+            //cerr << "Check Type " << entityId << endl;          
+            factories.readFactoryData(entityId, arg1, arg2, arg3);
+            } else {
+                // Для ввода данных Troops
+            }
+    }
+
+
+    // анализа по фабрикам
+ 
+    int tar;
+    if (factories.OutOwn(1)!=1){
+        tar = 1;
+    } else {
+        tar = 2;
+    }
+    
+    for (int i = 0; i < field.n; i++){
+        if (factories.OutOwn(i)==1){
+            int chk=factories.OutCyborgs(i);
+            //cerr << "CybCount " << chk << " " << tar << endl;
+            if (bind==2 and i != tar) {
+                cerr << "in " << bind << " " ;
+                cout << "BOMB " << i << " " << tar << ";";
+                bind=bind-1;
+                
+                cerr << "Bomb send to " << tar << " in " << bind << endl;
+                
+                if(chk<2) continue;
+                cout << "MOVE " << i << " " << tar << " " << 2 << ";";
+                chk=chk-2;
+            }
+             
+            //Цикл поиска точки с производством больше 1 по зонам близости
+            
+            for (int z = 1; z < field.n; z++){
+                int zind=field.findWay(i, z);
+                if(zind == 0) continue;
+                if (i==zind) continue;
+                if (factories.OutProd(zind)>1 && factories.OutOwn(zind)!=1 ){
+                    if(chk>factories.OutCyborgs(zind)+3) {
+                        cerr << "Prod exp" << endl;
+                        cout << "MOVE " << i << " " << zind << " " << factories.OutCyborgs(zind)+3 << ";";
+                        chk=chk-factories.OutCyborgs(zind)-3;   
+                    }
+                }
+                
+                //Распостранение на точки с 0 киборгов
+                if (factories.OutCyborgs(zind)==0 && factories.OutOwn(zind)!=1 ){
+                    if(chk>factories.OutCyborgs(zind)+3) {
+                        cerr << "Zero exp" << endl;
+                        cout << "MOVE " << i << " " << zind << " " << factories.OutCyborgs(zind)+3 << ";";
+                        chk=chk-factories.OutCyborgs(zind)-3;   
+                    }
+                }
+                
+                
+                if (factories.OutOwn(zind)!=1 ){
+                    if(chk>factories.OutCyborgs(zind)+3) {
+                        cerr << "exp" << endl;
+                        cout << "MOVE " << i << " " << zind << " " << factories.OutCyborgs(zind)+3 << ";";
+                        chk=chk-factories.OutCyborgs(zind)-3;   
+                    }
+                }
+                
+            }
+            
+            
+            
+                   
+            for (int j = 0; j < field.n; j++){
+                // Поиск ближайшей  нейтральной точки с производством больше 1
+                if (factories.OutProd(j)>1 && factories.OutOwn(j)==0 ){
+                    if(j == i) continue;
+                    if(chk>3) {
+                        //cerr << "Found prod > 2" << endl;
+                        cout << "MOVE " << i << " " << j << " " << 3 << ";";
+                        chk=chk-3;
+                    } else {
+                       // cout << "MOVE " << i << " " << j << " 3" << ";";
+                        //chk=chk-3;
+                    }
+                } 
+                
+                
+             
+                
+                
+                // Поиск ближайшей  враждебной точки с производством больше 1 и отправка бомбы
+                if (factories.OutProd(j)>1 && factories.OutOwn(j)==(-1)){
+                    if(j == i) continue;
+                    
+                    if(chk<3) continue;
+                    cerr << "Found prod Bomb " << bind << endl;
+                    if (bind==1) {
+                        if(j==i) continue;
+                        cerr << "prod Bomb send" << endl;
+                        cout << "BOMB " << i << " " << j << ";";
+                        bind--;
+                    }
+                    
+                    cout << "MOVE " << i << " " << j << " 3" << ";";
+                    chk=chk-3;
+                } 
+                /*
+                   //Распостранение на 1 очередь
+            if(i != field.findWay(i, 1) && factories.OutOwn(field.findWay(i, 1))!=1) {
+                //if (factories.OutOwn(j)==1) continue;
+                if(chk<5) continue;
+                cerr << "NearExpansion" << endl;
+                cout << "MOVE " << i << " " << field.findWay(i, 1) << " 1" << ";";
+                chk--;
+            }  
+                
+                
+                //Распостранение на любую не свою точку
+                if (factories.OutOwn(j)==(-1)){
+                    if(j == i) continue;
+                    if(chk<3) continue;
+                    cerr << "expansion " << i << " " << j << endl;
+                    cout << "MOVE " << i << " " << j << " 2" << ";";;
+                    chk=chk-2;
+                }
+               */
+                 
+                //Поддержка своих точек
+                if (factories.OutOwn(j)==1 && factories.OutCyborgs(j)<2){
+                    if(j == i) continue;
+                    if(chk<2) continue;
+                    cerr << "help" << endl;
+                    cout << "MOVE " << i << " " << j << " 2" << ";";;
+                    chk--;
+                }
+                   
+                 
+            } 
+              
+            
+            /*    
+            //Распостранение на ближайшую точку
+            if(i != field.findWay(i, 2)  && factories.OutCyborgs(field.findWay(i, 2))!=1) {
+                if(chk<2) continue;
+                cerr << "farExpansion" << endl;
+                cout << "MOVE " << i << " " << field.findWay(i, 2) << " 1" << ";";
+                chk--;
+            } 
+            
+            if(i != field.findWay(i, 3)  && factories.OutCyborgs(field.findWay(i, 2))!=1) {
+                if(chk<2) continue;
+                cerr << "farExpansion" << endl;
+                cout << "MOVE " << i << " " << field.findWay(i, 3) << " 1" << ";";
+                chk--;
+            } 
+            
+            
+            */
+            
+            
+                
+        }
+        
+    }
+        
+    //cerr << "End" << endl;       
+    cout << "WAIT"<< endl;      
+      
+}   // end loop
+    
+}   //End main
